@@ -4,8 +4,6 @@ import edu.gemini.aspen.gds.keywords.CollectedKeyword
 import edu.gemini.aspen.gds.obsevents.ObservationEvent
 
 sealed trait ObservationStateEvent
-//   val dataLabel: String
-// }
 
 object ObservationStateEvent {
   final case class Start(dataLabel: String, programId: String) extends ObservationStateEvent

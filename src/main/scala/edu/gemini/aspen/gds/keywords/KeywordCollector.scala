@@ -1,5 +1,6 @@
 package edu.gemini.aspen.gds.keywords
 
+import cats._
 import cats.effect._
 import cats.effect.syntax.all._
 import cats.syntax.all._
@@ -17,7 +18,7 @@ trait KeywordCollector[F[_]] {
 // it should also do it's own shift to a blocking pool.
 // retriever might also need the data label and program id.
 object KeywordCollector {
-  def apply[F[_]: Async](
+  def apply[F[_]: Async: Parallel](
     subSystem: SubSystem,
     config:    Configuration,
     retriever: ConfigurationItem => F[String] // will return F[FitsValue] in real life
@@ -30,13 +31,11 @@ object KeywordCollector {
         count: Count[F],
         adder: CollectedKeyword => F[Unit]
       ): F[Unit] =
-        // Use traverse instead of parTraverse because we want to make
-        // sure the counter gets incremented before returning.
         // I probably should worry about cancellation wrt decrementing the counter
         configForSubsys
           .forEvent(event)
           .items
-          .traverse(ci => count.incr >> retrieveOne(event, ci, count, adder).start)
+          .parTraverse(ci => count.incr >> retrieveOne(event, ci, count, adder).start)
           .void
 
       private def retrieveOne(
